@@ -41,7 +41,7 @@ const verifyFireBaseToken = async (req, res, next) => {
     try {
       const idToken = token.split(' ')[1]
       const decoded = await admin.auth().verifyIdToken(idToken)
-      console.log('decoded in middleware', decoded);
+      // console.log('decoded in middleware', decoded);
       req.decoded_email = decoded.email;
       next()
       
@@ -196,13 +196,13 @@ async function run() {
     app.patch('/payment-success', async(req, res) => {
         const sessionId = req.query.session_id;
         const session = await stripe.checkout.sessions.retrieve(sessionId)
-        console.log('session retrive =>', session);
+        // console.log('session retrive =>', session);
 
         const transactionId = session.payment_intent;
         const query = {transactionId: transactionId}
 
         const paymentExist = await paymentCollection.findOne(query)
-        console.log(paymentExist);
+        // console.log(paymentExist);
         if(paymentExist){
            return res.send({
             message: 'Already Exist', 
@@ -293,6 +293,32 @@ async function run() {
         rider.createdAt = new Date();
 
         const result = await riderCollection.insertOne(rider)
+        res.send(result)
+    })
+
+    app.patch('/riders/:id', verifyFireBaseToken, async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const status = req.body.status
+        const updatedRider = {
+           $set : {
+             status: status
+           }
+        }
+
+        const result = await riderCollection.updateOne(query, updatedRider);
+
+        if(status === 'approved'){
+          const email = req.body.email
+          const userQuery = {email}
+          const updateUser = {
+             $set: {
+                role: 'rider'
+             }
+          }
+          const result = await userCollection.updateOne(userQuery, updateUser)
+        }
+
         res.send(result)
     })
 
