@@ -98,6 +98,26 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/users', verifyFireBaseToken,  async(req, res) => {
+        const cursor = userCollection.find()
+        const result = await cursor.toArray()
+        res.send(result)
+    })
+
+    app.patch('/users/:id', async(req, res) => {
+        const id = req.params.id;
+        const roleInfo = req.body;
+        const query = {_id: new ObjectId(id)}
+        const updateRole = {
+           $set: {
+             role: roleInfo.role
+           }
+        }
+        const result = await userCollection.updateOne(query, updateRole)
+        res.send(result)
+        
+    })
+
     // parcels api
     app.post('/parcels', async(req, res) => {
         const parcel = req.body;
