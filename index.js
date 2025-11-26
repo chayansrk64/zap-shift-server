@@ -82,6 +82,17 @@ async function run() {
     const paymentCollection = db.collection('payments');
     const riderCollection = db.collection('riders');
 
+    // middleware with database access
+    // must use after verifyFirebaseToken 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded_email;
+      const query = {email}
+      const user = await userCollection.findOne(query)
+      if(!user || user.role !== 'admin'){
+        return res.status(403).send({message: 'forbidden access'})
+      }  
+      next()
+    }
 
 
     // users api
@@ -115,7 +126,7 @@ async function run() {
         res.send({role: user?.role || 'user'})
     })
 
-    app.patch('/users/:id', async(req, res) => {
+    app.patch('/users/:id/role', verifyFireBaseToken, verifyAdmin, async(req, res) => {
         const id = req.params.id;
         const roleInfo = req.body;
         const query = {_id: new ObjectId(id)}
@@ -327,7 +338,7 @@ async function run() {
         res.send(result)
     })
 
-    app.patch('/riders/:id', verifyFireBaseToken, async(req, res) => {
+    app.patch('/riders/:id', verifyFireBaseToken, verifyAdmin, async(req, res) => {
         const id = req.params.id;
         const query = {_id: new ObjectId(id)}
         const status = req.body.status
