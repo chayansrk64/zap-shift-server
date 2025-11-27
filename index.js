@@ -161,9 +161,12 @@ async function run() {
     app.get('/parcels', async(req, res) => {
         const query = {}
         // /parcels?email=manik@gmail.com
-        const {email} = req.query;
+        const {email, deliveryStatus} = req.query;
         if(email){
           query.senderEmail = email;
+        }
+        if(deliveryStatus){
+          query.deliveryStatus = deliveryStatus
         }
         const options = {sort: {createdAt: -1}}
         const cursor = parcelCollection.find(query, options)
@@ -271,6 +274,7 @@ async function run() {
            const update = {
              $set: {
                paymentStatus: 'paid',
+               deliveryStatus: 'pending-pickup',
                trackingId: trackingId
              }
            }
