@@ -363,7 +363,7 @@ async function run() {
         }
 
         // using the previous tracking id; while parcel created and set to the session metadata;
-        const trackingId = session.metadata.trackingId
+        const trackingId = session.metadata.trackingId;
 
         if(session.payment_status === 'paid'){
            const id = session.metadata.parcelId;
