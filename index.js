@@ -371,7 +371,7 @@ async function run() {
            const update = {
              $set: {
                paymentStatus: 'paid',
-               deliveryStatus: 'parcel-paid'
+               deliveryStatus: 'pending-pickup'
              }
            }
            const result = await parcelCollection.updateOne(query, update)
@@ -392,7 +392,7 @@ async function run() {
               const resultPayment = await paymentCollection.insertOne(payment)
 
               // log tracking
-              logTracking(trackingId, 'pending-pickup')
+              logTracking(trackingId, 'parcel-paid')
 
               res.send({
                  success: true,
