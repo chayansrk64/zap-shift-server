@@ -165,8 +165,13 @@ async function run() {
     // parcels api
     app.post('/parcels', async(req, res) => {
         const parcel = req.body;
+        const trackingId = generateTrackingId();
         // add date and time
         parcel.createdAt = new Date()
+        parcel.trackingId = trackingId;
+
+        logTracking(trackingId, 'parcel-created')
+
         const result = await parcelCollection.insertOne(parcel)
         res.send(result)
     })
@@ -301,7 +306,8 @@ async function run() {
           mode: 'payment',
           metadata: {
             parcelId: paymentInfo.parcelId,
-            parcelName: paymentInfo.parcelName
+            parcelName: paymentInfo.parcelName,
+            trackingId: paymentInfo.trackingId
           },
           success_url: `${process.env.MY_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${process.env.MY_DOMAIN}/dashboard/payment-cancelled`,
@@ -356,8 +362,8 @@ async function run() {
           })
         }
 
-
-        const trackingId = generateTrackingId()
+        // using the previous tracking id; while parcel created and set to the session metadata;
+        const trackingId = session.metadata.trackingId
 
         if(session.payment_status === 'paid'){
            const id = session.metadata.parcelId;
@@ -365,8 +371,7 @@ async function run() {
            const update = {
              $set: {
                paymentStatus: 'paid',
-               deliveryStatus: 'pending-pickup',
-               trackingId: trackingId
+               deliveryStatus: 'parcel-paid'
              }
            }
            const result = await parcelCollection.updateOne(query, update)
@@ -405,7 +410,6 @@ async function run() {
     })
 
 
-    // payment releted apis
     app.get('/payments', verifyFireBaseToken, async(req, res) => {
         
         const email = req.query.email;
