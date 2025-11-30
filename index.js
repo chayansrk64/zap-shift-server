@@ -94,6 +94,16 @@ async function run() {
       }  
       next()
     }
+    // verifyRider
+    const verifyRider = async (req, res, next) => {
+      const email = req.decoded_email;
+      const query = {email}
+      const user = await userCollection.findOne(query)
+      if(!user || user.role !== 'rider'){
+        return res.status(403).send({message: 'forbidden access'})
+      }  
+      next()
+    }
 
     // log tracking
     const logTracking = async(trackingId, status) => {
@@ -388,24 +398,23 @@ async function run() {
                trackingId: trackingId
            }
 
-           if(session.payment_status === 'paid'){
+          
               const resultPayment = await paymentCollection.insertOne(payment)
 
               // log tracking
               logTracking(trackingId, 'parcel-paid')
 
-              res.send({
+              return res.send({
                  success: true,
                  trackingId: trackingId,
                  transactionId: session.payment_intent,
                  modifyParcel: result, 
                  paymentInfo: resultPayment,
                 })
-           }
-
-          
+  
         }
-        res.send({success: false})
+
+        return res.send({success: false})
         
     })
 
