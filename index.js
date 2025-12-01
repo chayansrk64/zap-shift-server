@@ -228,6 +228,19 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/parcels/delivery-status/stats', async(req, res) => {
+        const pipeline = [
+          {
+            $group: {
+              _id: '$deliveryStatus',
+              count: {$sum : 1}
+            }
+        }
+      ]
+      const result = await parcelCollection.aggregate(pipeline).toArray()
+      res.send(result)
+    })
+
     // ToDo: rename this to specific like /parcels/:id/assign
     app.patch('/parcels/:id', async(req, res) => {
       const {riderId, riderName, riderEmail, trackingId} = req.body;
