@@ -235,6 +235,13 @@ async function run() {
               _id: '$deliveryStatus',
               count: {$sum : 1}
             }
+        },
+        {
+          $project: {
+            status: '$_id',
+            count: 1,
+            // _id: 0
+          }
         }
       ]
       const result = await parcelCollection.aggregate(pipeline).toArray()
