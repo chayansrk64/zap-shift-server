@@ -480,6 +480,56 @@ async function run() {
     })
 
 
+    app.get('/riders/delivery-per-day', async(req, res) => {
+        const email = req.query.email;
+        // aggregate on parcel
+            const pipeline = [
+                {
+                    $match: {
+                        riderEmail: email,
+                        deliveryStatus: "parcel-delivered"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "trackings",
+                        localField: "trackingId",
+                        foreignField: "trackingId",
+                        as: "parcel-trackings"
+                    }
+                },
+                {
+                    $unwind: "$parcel-trackings"
+                },
+                {
+                    $match: {
+                        "parcel-trackings.status": "parcel-delivered"
+                    }
+                },
+                {
+                    // convert timestamp to YYYY-MM-DD string
+                    $addFields: {
+                        deliveryDay: {
+                            $dateToString: {
+                                format: "%Y-%m-%d",
+                                date: "$parcel-trackings.createdAt"
+                            }
+                        }
+                    }
+                },
+                {
+                    // group by date
+                    $group: {
+                        _id: "$deliveryDay",
+                        deliveredCount: { $sum: 1 }
+                    }
+                }
+            ];
+
+        const result = await parcelCollection.aggregate(pipeline).toArray()
+        res.send(result)
+    })
+
     app.post('/riders', async(req, res) => {
         const rider = req.body;
         rider.status = 'pending';
